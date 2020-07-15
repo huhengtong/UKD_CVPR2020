@@ -8,9 +8,9 @@ K = 10
 train_size = 18015
 label_dim = 24
 
-train_img = np.load('/home/huhengtong/UKD/data/imgs_train.npy')
-train_txt = np.load('/home/huhengtong/UKD/data/texts_train.npy')
-train_labels = np.load('/home/huhengtong/UKD/data/labels_train.npy')
+train_img = np.load('/....../imgs_train.npy')
+train_txt = np.load('/....../texts_train.npy')
+train_labels = np.load('/....../labels_train.npy')
 # def get_feature(feature_string_list, train_size):
 # 	feature_list = []
 # 	for i in range(train_size):
