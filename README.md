@@ -2,7 +2,7 @@
 The source code for the CVPR2020 paper "Creating Something from Nothing: Unsupervised Knowledge Distillation for Cross-Modal Hashing". 
 The paper is avaliable in "https://arxiv.org/abs/2004.00280". 
 
-![image](https://github.com/huhengtong/UKD/blob/master/framework.pdf)  
+![Image Text](https://github.com/huhengtong/UKD/blob/master/framework.png)  
 
 The codes consist of two parts, namely teacher model and student model. Training the teacher model firstly to obtain the features of different modality data, then estimating similarities by calculating the distance between features. Finally, using the similarity information to supervise the learning of the student model. 
 
