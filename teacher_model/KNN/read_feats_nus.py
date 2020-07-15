@@ -9,10 +9,6 @@ from read_nuswide import loading_data, read_images
 from resnet50 import ResNet
 from keras.layers import Flatten, Input
 from keras.models import Model
-import moxing as mox
-mox.file.shift('os', 'mox')
-
-mox.file.copy_parallel('s3://bucket-7000/huhengtong/UGACH-data/weights_resnet.npy', '/cache/weights_resnet.npy') 
 
 VGG_MEAN = [103.939, 116.779, 123.68]
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -145,36 +141,15 @@ def get_dict(keys, values):
     return dictionary
 
 
-# def get_feat(sess, train_img_path, num_data):
-#     model_para_path = '/cache/vgg19.npy'
-#     VGG_model = Vgg19(vgg19_npy_path=model_para_path)
-
-#     ph = {}
-#     ph['image_input'] = tf.placeholder(tf.float32, [None, 224, 224, 3], name='image_input')
-
-#     img_feats = VGG_model.build(ph['image_input'])
-
-#     batch_size = 256
-#     imgs_feat, imgs_path = [], []
-#     index = np.random.permutation(num_data)
-#     #with tf.Session() as sess:
-#     for iter in range(num_data // batch_size+1):
-#         print('iter', iter)
-#         ind = index[iter * batch_size: min((iter + 1) * batch_size, num_data)]
-#         imgPath_batch = train_img_path[ind]
-#         imgs_batch = read_images(imgPath_batch).astype(np.float32)
-#         #print(imgs_batch.shape)
-
-#         img_feat = sess.run(img_feats, feed_dict={ph['image_input']: imgs_batch})
-#         #img_feat = VGG_model.build(imgs_batch)
-#         #print(img_feat)
-#         #feature_dict = dict(zip(imgPath_batch, img_feat))
-#         imgs_feat.append(img_feat)
-#         imgs_path.append(imgPath_batch)
-#     return np.array(imgs_feat), np.array(imgs_path)
-
 def get_feat(sess, train_img_path, num_data):
-    DATABASE_SIZE = 18015
+    model_para_path = '/cache/vgg19.npy'
+    VGG_model = Vgg19(vgg19_npy_path=model_para_path)
+
+    ph = {}
+    ph['image_input'] = tf.placeholder(tf.float32, [None, 224, 224, 3], name='image_input')
+
+    img_feats = VGG_model.build(ph['image_input'])
+
     batch_size = 256
     imgs_feat, imgs_path = [], []
     index = np.random.permutation(num_data)
@@ -184,14 +159,35 @@ def get_feat(sess, train_img_path, num_data):
         ind = index[iter * batch_size: min((iter + 1) * batch_size, num_data)]
         imgPath_batch = train_img_path[ind]
         imgs_batch = read_images(imgPath_batch).astype(np.float32)
+        #print(imgs_batch.shape)
 
         img_feat = sess.run(img_feats, feed_dict={ph['image_input']: imgs_batch})
-#         print(img_feat.shape)
-#         pdb.set_trace()
-
+        #img_feat = VGG_model.build(imgs_batch)
+        #print(img_feat)
+        #feature_dict = dict(zip(imgPath_batch, img_feat))
         imgs_feat.append(img_feat)
         imgs_path.append(imgPath_batch)
     return np.array(imgs_feat), np.array(imgs_path)
+
+# def get_feat(sess, train_img_path, num_data):
+#     DATABASE_SIZE = 18015
+#     batch_size = 256
+#     imgs_feat, imgs_path = [], []
+#     index = np.random.permutation(num_data)
+#     #with tf.Session() as sess:
+#     for iter in range(num_data // batch_size+1):
+#         print('iter', iter)
+#         ind = index[iter * batch_size: min((iter + 1) * batch_size, num_data)]
+#         imgPath_batch = train_img_path[ind]
+#         imgs_batch = read_images(imgPath_batch).astype(np.float32)
+
+#         img_feat = sess.run(img_feats, feed_dict={ph['image_input']: imgs_batch})
+# #         print(img_feat.shape)
+# #         pdb.set_trace()
+
+#         imgs_feat.append(img_feat)
+#         imgs_path.append(imgPath_batch)
+#     return np.array(imgs_feat), np.array(imgs_path)
 
 
 images_path, tags, labels = loading_data()
@@ -220,34 +216,33 @@ for i in range(num_test_img):
 
 #pdb.set_trace()
 workdir = '/cache/'
-list_dir = 's3://bucket-7000/huhengtong/UGACH-data/nus-wide/'
-np.save(workdir + 'resnet50_nus_train_img_path_list.npy', train_img_path_list)
-np.save(workdir + 'resnet50_nus_test_img_path_list.npy', test_img_path_list)
+np.save(workdir + 'nus_train_img_path_list.npy', train_img_path_list)
+np.save(workdir + 'nus_test_img_path_list.npy', test_img_path_list)
 
 test_tags_dict = get_dict(test_img_path, test_tags)
 test_labels_dict = get_dict(test_img_path, test_labels)
 train_tags_dict = get_dict(train_img_path, train_tags)
 train_labels_dict = get_dict(train_img_path, train_labels)
 
-# with tf.Session() as sess:
-#     train_imgs_feat, train_imgs_path = get_feat(sess, train_img_path, DATABASE_SIZE)
-#     test_imgs_feat, test_imgs_path = get_feat(sess, test_img_path, QUERY_SIZE)
 with tf.Session() as sess:
-    pretr_weights_path = '/cache/weights_resnet.npy'
-    resnet = ResNet(resnet_npy_path = pretr_weights_path)
-
-    ph = {}
-    ph['image_input'] = tf.placeholder(tf.float32, [None, 224, 224, 3], name='image_input')
-
-    #img_feats = VGG_model.build(ph['image_input'])
-    resnet.build(ph['image_input'])
-    img_feats = resnet.fc1
-
-    sess.run(tf.global_variables_initializer())
-    resnet.load_weights(sess)
-
-    train_imgs_feat, train_imgs_path = get_feat(sess, train_img_path, DATABASE_SIZE)  
+    train_imgs_feat, train_imgs_path = get_feat(sess, train_img_path, DATABASE_SIZE)
     test_imgs_feat, test_imgs_path = get_feat(sess, test_img_path, QUERY_SIZE)
+# with tf.Session() as sess:
+#     pretr_weights_path = '/cache/weights_resnet.npy'
+#     resnet = ResNet(resnet_npy_path = pretr_weights_path)
+
+#     ph = {}
+#     ph['image_input'] = tf.placeholder(tf.float32, [None, 224, 224, 3], name='image_input')
+
+#     #img_feats = VGG_model.build(ph['image_input'])
+#     resnet.build(ph['image_input'])
+#     img_feats = resnet.fc1
+
+#     sess.run(tf.global_variables_initializer())
+#     resnet.load_weights(sess)
+
+#     train_imgs_feat, train_imgs_path = get_feat(sess, train_img_path, DATABASE_SIZE)  
+#     test_imgs_feat, test_imgs_path = get_feat(sess, test_img_path, QUERY_SIZE)
 #print(imgs_feat[0:5])
 train_imgs_feat, train_imgs_path = np.concatenate(train_imgs_feat), np.concatenate(train_imgs_path)
 test_imgs_feat, test_imgs_path = np.concatenate(test_imgs_feat), np.concatenate(test_imgs_path)
@@ -256,11 +251,11 @@ test_imgs_dict = get_dict(test_imgs_path, test_imgs_feat)
 print(train_imgs_feat.shape, train_imgs_path.shape)
 print(test_imgs_feat.shape, test_imgs_path.shape)
 
-np.save(workdir + 'resnet50_nus_train_img_dict.npy', train_imgs_dict)
-np.save(workdir + 'resnet50_nus_train_txts_dict.npy', train_tags_dict)
-np.save(workdir + 'resnet50_nus_train_labels_dict.npy', train_labels_dict)
+np.save(workdir + 'nus_train_img_dict.npy', train_imgs_dict)
+np.save(workdir + 'nus_train_txts_dict.npy', train_tags_dict)
+np.save(workdir + 'nus_train_labels_dict.npy', train_labels_dict)
 
-np.save(workdir + 'resnet50_nus_test_img_dict.npy', test_imgs_dict)
-np.save(workdir + 'resnet50_nus_test_txts_dict.npy', test_tags_dict)
-np.save(workdir + 'resnet50_nus_test_labels_dict.npy', test_labels_dict)
+np.save(workdir + 'nus_test_img_dict.npy', test_imgs_dict)
+np.save(workdir + 'nus_test_txts_dict.npy', test_tags_dict)
+np.save(workdir + 'nus_test_labels_dict.npy', test_labels_dict)
 print('Done')
