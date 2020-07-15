@@ -1,19 +1,6 @@
 import numpy as np
 import pdb
 
-# def precision_at_k(r, k):
-#     assert k >= 1
-#     r = np.asarray(r)[:k]
-#     return np.mean(r)
-#
-# def average_precision(r):
-#     r = np.asarray(r)
-#     out = [precision_at_k(r, k + 1) for k in range(r.size) if r[k]]
-#     if not out:
-#         return 0.
-#     return np.mean(out)
-
-
 def calc_map(qB, rB, query_L, retrieval_L):
 	num_query = query_L.shape[0]
 	code_length = qB.shape[1]
