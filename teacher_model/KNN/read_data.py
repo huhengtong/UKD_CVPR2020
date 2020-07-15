@@ -11,9 +11,9 @@ from PIL import Image
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def read_mirflickr():
-    texts_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-yall.mat"
-    labels_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-lall.mat"
-    images_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-fall.mat"
+    texts_path = "/....../mirflickr25k-yall.mat"
+    labels_path = "/....../mirflickr25k-lall.mat"
+    images_path = "/....../mirflickr25k-fall.mat"
 
     texts_data = loadmat(texts_path)['YAll']
     labels_data = loadmat(labels_path)['LAll']
@@ -95,12 +95,12 @@ print(texts_q.shape, imgs_q.shape, labels_q.shape)
 print(texts_train.shape, imgs_train.shape, labels_train.shape)
 pdb.set_trace()
 
-np.save('/home/huhengtong/UKD/data/texts_q.npy', texts_q)
-np.save('/home/huhengtong/UKD/data/imgs_q.npy', imgs_q)
-np.save('/home/huhengtong/UKD/data/labels_q.npy', labels_q)
-np.save('/home/huhengtong/UKD/data/imgs_path_q.npy', imgs_path_q)
+np.save('/....../data/texts_q.npy', texts_q)
+np.save('/....../data/imgs_q.npy', imgs_q)
+np.save('/....../data/labels_q.npy', labels_q)
+np.save('/....../data/imgs_path_q.npy', imgs_path_q)
 
-np.save('/home/huhengtong/UKD/data/texts_train.npy', texts_train)
-np.save('/home/huhengtong/UKD/data/imgs_train.npy', imgs_train)
-np.save('/home/huhengtong/UKD/data/labels_train.npy', labels_train)
-np.save('/home/huhengtong/UKD/data/imgs_path_train.npy', imgs_path_train)
+np.save('/....../data/texts_train.npy', texts_train)
+np.save('/....../data/imgs_train.npy', imgs_train)
+np.save('/....../data/labels_train.npy', labels_train)
+np.save('/....../data/imgs_path_train.npy', imgs_path_train)
