@@ -8,4 +8,4 @@ The experiments are conducted on MIRFlickr (link:https://pan.baidu.com/s/1IkT7x9
 
 To train the teacher model, running teacher_train.py in the file of teacher_model;  
 To calculate the similarity information, running calcu_sim.py in the file of teacher_model;  
-To train the student model, running student_train.py in the file of student_model;  
+To train the student model, running Main.py in the file of student_model;  
