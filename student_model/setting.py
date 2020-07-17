@@ -22,7 +22,7 @@ checkpoint_dir = './checkpoint'
 #SEMANTIC_EMBED = 512
 #MAX_ITER = 100
 num_train = 18015
-batch_size = 100
+batch_size = 256
 image_size = 224
 
 
@@ -44,6 +44,7 @@ dimLab = train_label.shape[1]
 
 #Sim = (np.dot(train_L, train_L.transpose()) > 0).astype(int)*0.999
 teacher_knn_img = np.load('/....../teacher_KNN_img.npy')
+teacher_knn_text = np.load('/....../teacher_KNN_text.npy')
 Sim_label = (np.dot(train_label, train_label.transpose()) > 0).astype(np.int32)
 
 Sim = np.zeros((num_train, num_train))
@@ -51,10 +52,10 @@ Sim = np.zeros((num_train, num_train))
 #ind_txt = teacher_knn_txt.astype(np.int32)
 #print(ind_img.shape)
 # pdb.set_trace()
-ap = 0
+#ap = 0
 for i in range(num_train):
-    # ind = np.concatenate((teacher_knn_img[i], teacher_knn_txt[i])).astype(np.int32)
-    Sim[i][ind_img[i]] = 0.999
+    ind = np.concatenate((teacher_knn_img[i], teacher_knn_txt[i])).astype(np.int32)
+    Sim[i][ind] = 0.999
 
 
 Epoch = 30
