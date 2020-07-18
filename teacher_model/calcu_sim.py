@@ -25,8 +25,7 @@ BETA = 5.0
 GAMMA = 0.1
 
 WORKDIR = '/....../'
-#DIS_MODEL_BEST_FILE = WORKDIR + 'teacher_best_' + str(OUTPUT_DIM) + '.model'
-DIS_MODEL_BEST_I2I_FILE = '......'
+DIS_MODEL_BEST_FILE = '......'
 
 train_img = np.load('/....../imgs_train.npy')
 train_txt = np.load('/....../texts_train.npy')
