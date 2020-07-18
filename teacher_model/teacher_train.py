@@ -37,8 +37,6 @@ BETA = OUTPUT_DIM / 8.0
 GAMMA = 0.1
 
 WORKDIR = '/cache/'
-#list_dir = 's3://bucket-7000/huhengtong/UGACH-data/'
-#GEN_MODEL_BEST_FILE = '/cache/gan_best_baseline_train_' + str(OUTPUT_DIM) + '.model'
 DIS_MODEL_BEST_FILE = '/cache/flickr_dis_teacher_modaLoss_' + str(OUTPUT_DIM) + '.model'
 DIS_MODEL_PRETRAIN_FILE = '/cache/dis_baseline_pretrain_' + str(OUTPUT_DIM) + '.model'
 
@@ -274,7 +272,7 @@ def main():
 # 				discriminator = train_discriminator(sess, discriminator, dis_train_i2i_list, 'i2i')
 # 				discriminator = train_discriminator(sess, discriminator, dis_train_t2t_list, 't2t')
 				if (d_epoch + 1) % (D_DISPLAY) == 0:
-					i2t_test_map, t2i_test_map = MAP(sess, discriminator)
+					i2t_test_map, t2i_test_map, i2i_test_map, t2t_test_map = MAP(sess, discriminator)
 					print('---------------------------------------------------------------')
 					print('train_I2T_Test_MAP: %.4f' % i2t_test_map)
 					print('train_T2I_Test_MAP: %.4f' % t2i_test_map)
@@ -292,7 +290,7 @@ def main():
 				generator = train_generator(sess, generator, discriminator, train_t2i, train_t2i_pos, 't2i')
 				
 				if (g_epoch + 1) % (G_DISPLAY) == 0:
-					i2t_test_map, t2i_test_map = MAP(sess, generator, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict)
+					i2t_test_map, t2i_test_map, i2i_test_map, t2t_test_map = MAP(sess, generator)
 					print('---------------------------------------------------------------')
 					print('train_I2T_Test_MAP: %.4f' % i2t_test_map)
 					print('train_T2I_Test_MAP: %.4f' % t2i_test_map)
