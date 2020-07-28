@@ -277,11 +277,11 @@ def main():
 					print('train_I2T_Test_MAP: %.4f' % i2t_test_map)
 					print('train_T2I_Test_MAP: %.4f' % t2i_test_map)
 					
-# 					average_map = 0.5 * (i2t_test_map + t2i_test_map)
-# 					if average_map > map_best_val_dis:
-# 						map_best_val_dis = average_map
-# 						discriminator.save_model(sess, DIS_MODEL_BEST_FILE)
-#				discriminator.save_model(sess, DIS_MODEL_NEWEST_FILE)
+					average_map = 0.5 * (i2t_test_map + t2i_test_map)
+					if average_map > map_best_val_dis:
+						map_best_val_dis = average_map
+						discriminator.save_model(sess, DIS_MODEL_BEST_FILE)
+				discriminator.save_model(sess, DIS_MODEL_NEWEST_FILE)
 				
 			print('Training G ...')		
 			for g_epoch in range(G_EPOCH):
