@@ -49,14 +49,14 @@ def compute_hashing(sess, model, data, flag):
 
 
 def MAP(sess, model):
-	train_img = np.load('/home/huhengtong/UKD/data/imgs_train.npy')
-	test_img = np.load('/home/huhengtong/UKD/data/imgs_q.npy')
+	train_img = np.load('/....../imgs_train.npy')
+	test_img = np.load('/....../imgs_q.npy')
 
-	train_txt = np.load('/home/huhengtong/UKD/data/texts_train.npy')
-	test_txt = np.load('/home/huhengtong/UKD/data/texts_q.npy')
+	train_txt = np.load('/....../texts_train.npy')
+	test_txt = np.load('/....../texts_q.npy')
 
-	train_label = np.load('/home/huhengtong/UKD/data/labels_train.npy')
-	test_label = np.load('/home/huhengtong/UKD/data/labels_q.npy')
+	train_label = np.load('/....../labels_train.npy')
+	test_label = np.load('/....../labels_q.npy')
 
 	train_img_hash = compute_hashing(sess, model, train_img, 'image')
 	test_img_hash = train_img_hash[0:2000]
