@@ -9,8 +9,6 @@ try:
     import cPickle as pickle
 except:
     import pickle
-import moxing as mox
-mox.file.shift('os', 'mox')
 
 GPU_ID = 0
 OUTPUT_DIM = 128
