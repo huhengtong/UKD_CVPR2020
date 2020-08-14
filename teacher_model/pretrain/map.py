@@ -59,11 +59,9 @@ def MAP(sess, model):
 	test_label = np.load('/....../labels_q.npy')
 
 	train_img_hash = compute_hashing(sess, model, train_img, 'image')
-	test_img_hash = train_img_hash[0:2000]
-	#test_img_hash = compute_hashing(sess, model, test_img, 'image')
+	test_img_hash = compute_hashing(sess, model, test_img, 'image')
 	train_txt_hash = compute_hashing(sess, model, train_txt, 'text')
-	test_txt_hash = train_txt_hash[0:2000]
-	#test_txt_hash = compute_hashing(sess, model, test_txt, 'text')
+	test_txt_hash = compute_hashing(sess, model, test_txt, 'text')
 
 	map_i2t = calc_map(test_img_hash, train_txt_hash, test_label, train_label)
 	map_t2i = calc_map(test_txt_hash, train_img_hash, test_label, train_label)
