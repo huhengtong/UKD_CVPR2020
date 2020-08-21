@@ -38,7 +38,7 @@ WORKDIR = '/cache/'
 DIS_MODEL_BEST_FILE = '/cache/flickr_dis_teacher_modaLoss_' + str(OUTPUT_DIM) + '.model'
 DIS_MODEL_PRETRAIN_FILE = '/cache/dis_baseline_pretrain_' + str(OUTPUT_DIM) + '.model'
 
-train_i2t, train_i2t_pos, train_i2t_neg, train_t2i, train_t2i_pos, train_t2i_neg = ut.load_all_query_url()
+train_i2t, train_i2t_pos, train_i2t_neg, train_t2i, train_t2i_pos, train_t2i_neg, test_i2t, test_i2t_pos, test_t2i, test_t2i_pos = ut.load_all_query_url(WORKDIR, CLASS_DIM)
 
 feature_dict = ut.load_all_feature(WORKDIR)
 label_dict = ut.load_all_label(WORKDIR)
@@ -270,7 +270,7 @@ def main():
 # 				discriminator = train_discriminator(sess, discriminator, dis_train_i2i_list, 'i2i')
 # 				discriminator = train_discriminator(sess, discriminator, dis_train_t2t_list, 't2t')
 				if (d_epoch + 1) % (D_DISPLAY) == 0:
-					i2t_test_map, t2i_test_map, i2i_test_map, t2t_test_map = MAP(sess, discriminator)
+					i2t_test_map, t2i_test_map = MAP(sess, discriminator, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict)
 					print('---------------------------------------------------------------')
 					print('train_I2T_Test_MAP: %.4f' % i2t_test_map)
 					print('train_T2I_Test_MAP: %.4f' % t2i_test_map)
@@ -288,7 +288,7 @@ def main():
 				generator = train_generator(sess, generator, discriminator, train_t2i, train_t2i_pos, 't2i')
 				
 				if (g_epoch + 1) % (G_DISPLAY) == 0:
-					i2t_test_map, t2i_test_map, i2i_test_map, t2t_test_map = MAP(sess, generator)
+					i2t_test_map, t2i_test_map = MAP(sess, discriminator, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict)
 					print('---------------------------------------------------------------')
 					print('train_I2T_Test_MAP: %.4f' % i2t_test_map)
 					print('train_T2I_Test_MAP: %.4f' % t2i_test_map)
