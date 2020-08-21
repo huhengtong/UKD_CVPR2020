@@ -1,25 +1,24 @@
-import pickle, random, pdb, time
+import random, pdb, time
 import tensorflow as tf
 import numpy as np
 import utils as ut
-import os
-from map import *
+from map_old import *
 from dis_model_nn import DIS
-
+try:
+    import cPickle as pickle
+except:
+    import pickle
+    
 GPU_ID = 1
 OUTPUT_DIM = 128
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 SELECTNUM = 1
 SAMPLERATIO = 20
 
-WHOLE_EPOCH = 30
-D_EPOCH = 100
-G_EPOCH = 2
-GS_EPOCH = 30
+WHOLE_EPOCH = 1
+D_EPOCH = 200
+GS_EPOCH = 1000
 D_DISPLAY = 1
-G_DISPLAY = 10
 
 IMAGE_DIM = 4096
 TEXT_DIM = 1386
@@ -32,18 +31,14 @@ LAMBDA = 0
 BETA = OUTPUT_DIM / 8.0
 GAMMA = 0.1
 
-# WORKDIR = '../mir/'
-DIS_MODEL_BEST_FILE = '/....../teacher_best_pretrain' + str(OUTPUT_DIM) + '.model'
-#DIS_MODEL_BEST_I2I_FILE = '/home/huhengtong/UKD/teacher_UGACH/OL_teacher_best_i2i_' + str(OUTPUT_DIM) + '.model'
-# DIS_MODEL_NEWEST_FILE = './model/dis_newest_nn_' + str(OUTPUT_DIM) + '.model'
 
-train_i2t, train_i2t_pos, train_i2t_neg, train_t2i, train_t2i_pos, train_t2i_neg = ut.load_all_query_url()
+list_dir = '/home/huhengtong/UKD/data/'
+DIS_MODEL_PRETRAIN_FILE = list_dir + 'teacher_best_pretrain_' + str(OUTPUT_DIM) + '.model'
 
-# pdb.set_trace()
+train_i2t, train_i2t_pos, train_i2t_neg, train_t2i, train_t2i_pos, train_t2i_neg, test_i2t, test_i2t_pos, test_t2i, test_t2i_pos = ut.load_all_query_url(list_dir, CLASS_DIM)
 
-feature_dict = ut.load_all_feature()
-label_dict = ut.load_all_label()
-#print(len(feature_dict), len(label_dict))
+feature_dict = ut.load_all_feature(list_dir)
+label_dict = ut.load_all_label(list_dir)
 
 
 def generate_samples(train_pos, train_neg, flag):
@@ -60,7 +55,6 @@ def generate_samples(train_pos, train_neg, flag):
 	
 	random.shuffle(data)
 	return data
-
 
 def train_discriminator(sess, discriminator, dis_train_list, flag):
 	train_size = len(dis_train_list)
@@ -125,38 +119,31 @@ def main():
 		print('start adversarial training')
 		map_best_val_gen = 0.0
 		map_best_val_dis = 0.0
-		average_map = 0
 
-		#for epoch in range(WHOLE_EPOCH):
-		print('Training D ...')
-		for d_epoch in range(D_EPOCH):
-			print('d_epoch: ' + str(d_epoch))
-			if d_epoch % GS_EPOCH == 0:
-				print('negative text sampling for d using g ...')
-				dis_train_i2t_list = generate_samples(train_i2t_pos, train_i2t_neg, 'i2t')
-				print('negative image sampling for d using g ...')
-				dis_train_t2i_list = generate_samples(train_t2i_pos, train_t2i_neg, 't2i')
-
-			discriminator = train_discriminator(sess, discriminator, dis_train_i2t_list, 'i2t')
-			discriminator = train_discriminator(sess, discriminator, dis_train_t2i_list, 't2i')
-
-			if (d_epoch + 1) % (D_DISPLAY) == 0:
-				i2t_test_map, t2i_test_map, i2i_test_map, t2t_test_map = MAP(sess, discriminator)
-				print('I2T_Test_MAP: %.4f' % i2t_test_map)
-				print('T2I_Test_MAP: %.4f' % t2i_test_map)
-				# print('I2I_Test_MAP: %.4f' % i2i_test_map)
-				# print('T2T_Test_MAP: %.4f' % t2t_test_map)
-
-				average_map = 0.5 * (i2t_test_map + t2i_test_map)
-				if average_map > map_best_val_dis:
-					map_best_val_dis = average_map
-					discriminator.save_model(sess, DIS_MODEL_BEST_FILE)
+		for epoch in range(WHOLE_EPOCH):
+			print('Training D ...')
+			for d_epoch in range(D_EPOCH):
+				print('d_epoch: ' + str(d_epoch))
+				if d_epoch % GS_EPOCH == 0:
+					print('negative text sampling for d using g ...')
+					dis_train_i2t_list = generate_samples(train_i2t_pos, train_i2t_neg, 'i2t')
+					print('negative image sampling for d using g ...')
+					dis_train_t2i_list = generate_samples(train_t2i_pos, train_t2i_neg, 't2i')
 				
-
-			#discriminator.save_model(sess, DIS_MODEL_NEWEST_FILE)
+				discriminator = train_discriminator(sess, discriminator, dis_train_i2t_list, 'i2t')
+				discriminator = train_discriminator(sess, discriminator, dis_train_t2i_list, 't2i')
+				
+				if (d_epoch + 1) % (D_DISPLAY) == 0:
+					i2t_test_map, t2i_test_map = MAP(sess, discriminator, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict)
+					print('---------------------------------------------------------------')
+					print('pretrain_I2T_Test_MAP: %.4f' % i2t_test_map)
+					print('pretrain_T2I_Test_MAP: %.4f' % t2i_test_map)
 					
+					average_map = 0.5 * (i2t_test_map + t2i_test_map)
+					if average_map > map_best_val_dis:
+						map_best_val_dis = average_map
+						discriminator.save_model(sess, DIS_MODEL_PRETRAIN_FILE)
+
 		sess.close()
-
-
 if __name__ == '__main__':
 	main()
