@@ -11,9 +11,9 @@ from PIL import Image
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def read_mirflickr():
-    texts_path = "/....../mirflickr25k-yall.mat"
-    labels_path = "/....../mirflickr25k-lall.mat"
-    images_path = "/....../mirflickr25k-fall.mat"
+    texts_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-yall.mat"
+    labels_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-lall.mat"
+    images_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-fall.mat"
 
     texts_data = loadmat(texts_path)['YAll']
     labels_data = loadmat(labels_path)['LAll']
@@ -75,6 +75,15 @@ def extract_features(images_path):
     return feat_all, img_idxs
 
 
+def get_dict(keys, values):
+    dictionary = {}
+    num_sam = keys.shape[0]
+    for i in range(num_sam):
+        dictionary[keys[i][0][0]] = values[i]
+    print(len(dictionary))
+    return dictionary
+
+
 texts_data, labels_data, image_names = read_mirflickr()
 img_feats, img_idxs = extract_features(image_names)
 
@@ -91,16 +100,30 @@ texts_train = texts_data[img_idxs][ind_T]
 imgs_train = img_feats[ind_T]
 imgs_path_train = image_names[img_idxs][ind_T]
 labels_train = labels_data[img_idxs][ind_T]
-print(texts_q.shape, imgs_q.shape, labels_q.shape)
-print(texts_train.shape, imgs_train.shape, labels_train.shape)
+
+test_tags_dict = get_dict(imgs_path_q, texts_q)
+test_labels_dict = get_dict(imgs_path_q, labels_q)
+train_tags_dict = get_dict(imgs_path_train, texts_train)
+train_labels_dict = get_dict(imgs_path_train, labels_train)
+train_imgs_dict = get_dict(imgs_path_train, imgs_train)
+test_imgs_dict = get_dict(imgs_path_q, imgs_q)
+
+train_img_path_list, test_img_path_list = [], []
+for i in range(len(imgs_path_train)):
+    train_img_path_list.append(imgs_path_train[i][0][0])
+for i in range(len(imgs_path_q)):
+    test_img_path_list.append(imgs_path_q[i][0][0])
+
+#print(texts_q.shape, imgs_q.shape, labels_q.shape)
+print(len(test_tags_dict), len(test_labels_dict), len(train_tags_dict), len(train_labels_dict))
 pdb.set_trace()
 
-np.save('/....../data/texts_q.npy', texts_q)
-np.save('/....../data/imgs_q.npy', imgs_q)
-np.save('/....../data/labels_q.npy', labels_q)
-np.save('/....../data/imgs_path_q.npy', imgs_path_q)
+np.save('/home/huhengtong/UKD/data/test_tags_dict.npy', test_tags_dict)
+np.save('/home/huhengtong/UKD/data/test_imgs_dict.npy', test_imgs_dict)
+np.save('/home/huhengtong/UKD/data/test_labels_dict.npy', test_labels_dict)
+np.save('/home/huhengtong/UKD/data/test_img_path_list.npy', test_img_path_list)
 
-np.save('/....../data/texts_train.npy', texts_train)
-np.save('/....../data/imgs_train.npy', imgs_train)
-np.save('/....../data/labels_train.npy', labels_train)
-np.save('/....../data/imgs_path_train.npy', imgs_path_train)
+np.save('/home/huhengtong/UKD/data/train_tags_dict.npy', train_tags_dict)
+np.save('/home/huhengtong/UKD/data/train_imgs_dict.npy', train_imgs_dict)
+np.save('/home/huhengtong/UKD/data/train_labels_dict.npy', train_labels_dict)
+np.save('/home/huhengtong/UKD/data/train_img_path_list.npy', train_img_path_list)
