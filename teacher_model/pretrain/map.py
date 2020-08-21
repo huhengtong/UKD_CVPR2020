@@ -1,71 +1,103 @@
 import numpy as np
 import pdb
+import utils as ut
 
+def precision_at_k(r, k):
+    assert k >= 1
+    r = np.asarray(r)[:k]
+    return np.mean(r)
 
-def calc_map(qB, rB, query_L, retrieval_L):
-	num_query = query_L.shape[0]
-	code_length = qB.shape[1]
-	map = 0
-	for iter in range(num_query):
-		gnd = (np.dot(query_L[iter, :], retrieval_L.transpose()) > 0).astype(np.float32)
-		tsum = np.sum(gnd)
-		if tsum == 0:
-			continue
-		#hamm = calc_hammingDist(qB[iter, :], rB)
-		#hamm = code_length - np.sum(qB[iter]^rB, axis=1)
-		hamm = np.sum(qB[iter] ^ rB, axis=1)
-		# print(hamm[0:9], len(hamm))
-		# pdb.set_trace()
-		ind = np.argsort(hamm)
-		gnd = gnd[ind]
-		count = np.linspace(1, tsum, tsum)
+def average_precision(r):
+    r = np.asarray(r)
+    out = [precision_at_k(r, k + 1) for k in range(r.size) if r[k]]
+    if not out:
+        return 0.
+    return np.mean(out)
+	
+def calcu_map(query_pos_test, query_index_url_test, hash_dict, label_dict):
+	rs = []
+	map = 0       
+#	print(len(query_pos_test))   
+	for query in query_pos_test.keys():
+# 		pos_set = set(query_pos_test[query])
+		pred_list = query_index_url_test[query]
+		
+		pred_list_score = []
+		query_hash = hash_dict[query]
+		query_L = label_dict[query]       
+        
+		code_length = query_hash.shape[0]
 
-		tindex = np.asarray(np.where(gnd == 1)) + 1.0
-		map = map + np.mean(count / (tindex))
-	map = map / num_query
-	return map
+		candidates_hash = []
+		retrieval_L = []
+		for candidate in pred_list:
+#			score = 0
+			candidates_hash.append(hash_dict[candidate]) 
+			retrieval_L.append(label_dict[candidate])    
+		candidates_hash = np.asarray(candidates_hash) 
+		retrieval_L = np.asarray(retrieval_L)        
+#		pred_list_score = code_length - np.sum(np.bitwise_xor(query_hash, candidates_hash), axis=1)  
+		hamming_dist = np.sum(np.bitwise_xor(query_hash, candidates_hash), axis=1)          
+		idx = np.argsort(hamming_dist)
 
+		gnd = (np.dot(query_L, retrieval_L.transpose()) > 0).astype(np.float32)  
+		gnd = gnd[idx]
+		tsum = np.sum(gnd)         
+		count = np.linspace(1, tsum, tsum)     
 
-def compute_hashing(sess, model, data, flag):
-	num_data = len(data)
+		tindex = np.asarray(np.where(gnd == 1)) + 1.0       
+		map = map + np.mean(count / (np.squeeze(tindex)))
+	map = map / len(query_pos_test)
+	return map  
+    
+def MAP(sess, model, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict):
+	hash_dict_img = get_hash_dict(sess, model, feature_dict, 'img')
+	hash_dict_txt = get_hash_dict(sess, model, feature_dict, 'txt')  
+	hash_dict_img.update(hash_dict_txt)   
+	hash_dict = hash_dict_img    
+ 
+	map_i2t = calcu_map(test_i2t_pos, test_i2t, hash_dict, label_dict)   
+	map_t2i = calcu_map(test_t2i_pos, test_t2i, hash_dict, label_dict) 
+	return map_i2t, map_t2i 
+
+def get_hash_dict(sess, model, feature_dict, flag):
 	batch_size = 256
-	index = np.linspace(0, num_data - 1, num_data).astype(np.int32)
-	# print(index)
-	# pdb.set_trace()
+	hash_list = []    
+	if flag == 'img':
+		index = 0
+		max_idx = 20015     
+	if flag == 'txt':
+		index = 20015
+		max_idx = 40030
+	while index < max_idx:
+		input_data = []
+		if index + batch_size <= max_idx:
+			for i in range(index, index+batch_size):
+				input_data.append(feature_dict[i])
+		else:
+			for i in range(index, max_idx):
+				input_data.append(feature_dict[i])
+		index += batch_size
+		input_data = np.asarray(input_data)
+		if flag == 'img':
+			output_hash = sess.run(model.image_hash, feed_dict={model.image_data: input_data})
+		if flag == 'txt':
+			output_hash = sess.run(model.text_hash, feed_dict={model.text_data: input_data})
+		hash_list.append(output_hash)
+	hash_list = np.concatenate(hash_list)     
+	list_idx = np.arange(max_idx-20015, max_idx)
+#	print(list_idx.shape)    
+	hash_dict = dict(zip(list_idx, hash_list))        
+	return hash_dict    
 
-	hash_data = []
-	for i in range(num_data // batch_size + 1):
-		ind = index[i * batch_size: min((i + 1) * batch_size, num_data)]
 
-		data_batch = data[ind]
-		if flag == 'image':
-			output_hash = sess.run(model.image_hash, feed_dict={model.image_data: data_batch})
-		elif flag == 'text':
-			output_hash = sess.run(model.text_hash, feed_dict={model.text_data: data_batch})
-		hash_data.append(output_hash)
-	hash_data = np.concatenate(hash_data)
-	#print(hash_data.shape)
-	return hash_data
+def get_labels(list_dir):
+	train_label_dict = np.load(list_dir + 'train_labels_dict.npy')
+	test_label_dict = np.load(list_dir + 'test_labels_dict.npy')
 
+	train_img_path_list = np.load(list_dir + 'train_img_path_list.npy')
+	test_img_path_list = np.load(list_dir + 'test_img_path_list.npy')
 
-def MAP(sess, model):
-	train_img = np.load('/....../imgs_train.npy')
-	test_img = np.load('/....../imgs_q.npy')
-
-	train_txt = np.load('/....../texts_train.npy')
-	test_txt = np.load('/....../texts_q.npy')
-
-	train_label = np.load('/....../labels_train.npy')
-	test_label = np.load('/....../labels_q.npy')
-
-	train_img_hash = compute_hashing(sess, model, train_img, 'image')
-	test_img_hash = compute_hashing(sess, model, test_img, 'image')
-	train_txt_hash = compute_hashing(sess, model, train_txt, 'text')
-	test_txt_hash = compute_hashing(sess, model, test_txt, 'text')
-
-	map_i2t = calc_map(test_img_hash, train_txt_hash, test_label, train_label)
-	map_t2i = calc_map(test_txt_hash, train_img_hash, test_label, train_label)
-	map_i2i = calc_map(test_img_hash, train_img_hash, test_label, train_label)
-	map_t2t = calc_map(test_txt_hash, train_txt_hash, test_label, train_label)
-
-	return map_i2t, map_t2i, map_i2i, map_t2t
+	train_label = ut.get_dict_values(train_label_dict, train_img_path_list)
+	test_label = ut.get_dict_values(test_label_dict, test_img_path_list)
+	return train_label, test_label     
