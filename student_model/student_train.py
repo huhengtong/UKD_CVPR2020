@@ -121,7 +121,7 @@ class SSAH(object):
         # Iterations
         for epoch in range(Epoch):
             print('++++++++Starting Training ++++++++')
-            lr_img = 0.00001
+            lr_img = 0.0001
             lr_txt = 0.0001
 
             for iter in range(2):
