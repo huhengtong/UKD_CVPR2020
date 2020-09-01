@@ -28,19 +28,33 @@ image_size = 224
 
 #images, tags, labels = loading_data(DATA_DIR)
 #texts_data, labels_data, image_names = read_mirflickr()
-data_path = '/....../data/'
-txt_q = np.load(data_path+'texts_q.npy')
-txt_train = np.load(data_path+'texts_train.npy')
+retrieval_txt_dict = np.load(list_dir + 'train_txts_dict.npy')
+test_txt_dict = np.load(list_dir + 'test_txts_dict.npy')
 
-img_q = np.load(data_path+'imgs_path_q.npy')
-img_train = np.load(data_path+'imgs_path_train.npy')
+retrieval_label_dict = np.load(list_dir + 'train_labels_dict.npy')
+test_label_dict = np.load(list_dir + 'test_labels_dict.npy')
 
-train_label = np.load(data_path+'labels_train.npy')
-test_label = np.load(data_path+'labels_q.npy')
+retrieval_img_path_list = np.load(list_dir + 'train_img_path_list.npy')
+test_img_path_list = np.load(list_dir + 'test_img_path_list.npy')
 
+retrieval_x = retrieval_img_path_list
+query_x = test_img_path_list 
+retrieval_y = get_dict_values(retrieval_txt_dict, retrieval_img_path_list)
+query_y = get_dict_values(test_txt_dict, test_img_path_list)
 
-dimTxt = txt_train.shape[1]
-dimLab = train_label.shape[1]
+train_x = retrieval_x[0:15000]
+train_y = retrieval_y[0:15000]
+
+retrieval_label = get_dict_values(retrieval_label_dict, retrieval_img_path_list)
+test_label = get_dict_values(test_label_dict, test_img_path_list)
+
+train_L = retrieval_label[0:15000]
+
+num_train = train_x.shape[0]
+numClass = test_label.shape[1]
+dimText = retrieval_y.shape[1]
+dimLab = test_label.shape[1]
+
 
 #Sim = (np.dot(train_L, train_L.transpose()) > 0).astype(int)*0.999
 teacher_knn_img = np.load('/....../teacher_KNN_img.npy')
