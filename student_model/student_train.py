@@ -14,12 +14,16 @@ from vgg19 import Vgg19
 
 class SSAH(object):
     def __init__(self, sess):
-        self.query_X = img_q
-        self.query_Y = txt_q
-        self.train_X = img_train
-        self.train_Y = txt_train
+        self.train_X = train_x
+        self.train_Y = train_y
+
         self.query_L = test_label
-        self.train_L = train_label
+        self.query_X = query_x
+        self.query_Y = query_y
+
+        self.retrieval_L = retrieval_label
+        self.retrieval_X = retrieval_x
+        self.retrieval_Y = retrieval_y 
 
         self.Sim = Sim
         self.img_net = Vgg19
