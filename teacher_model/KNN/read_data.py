@@ -11,9 +11,9 @@ from PIL import Image
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def read_mirflickr():
-    texts_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-yall.mat"
-    labels_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-lall.mat"
-    images_path = "/home/huhengtong/UKD/teacher_UGACH/KNN/mirflickr25k-fall.mat"
+    texts_path = "/.../mirflickr25k-yall.mat"
+    labels_path = "/.../mirflickr25k-lall.mat"
+    images_path = "/.../mirflickr25k-fall.mat"
 
     texts_data = loadmat(texts_path)['YAll']
     labels_data = loadmat(labels_path)['LAll']
@@ -118,12 +118,12 @@ for i in range(len(imgs_path_q)):
 print(len(test_tags_dict), len(test_labels_dict), len(train_tags_dict), len(train_labels_dict))
 pdb.set_trace()
 
-np.save('/home/huhengtong/UKD/data/test_tags_dict.npy', test_tags_dict)
-np.save('/home/huhengtong/UKD/data/test_imgs_dict.npy', test_imgs_dict)
-np.save('/home/huhengtong/UKD/data/test_labels_dict.npy', test_labels_dict)
-np.save('/home/huhengtong/UKD/data/test_img_path_list.npy', test_img_path_list)
+np.save('/.../data/test_tags_dict.npy', test_tags_dict)
+np.save('/.../data/test_imgs_dict.npy', test_imgs_dict)
+np.save('/.../data/test_labels_dict.npy', test_labels_dict)
+np.save('/.../data/test_img_path_list.npy', test_img_path_list)
 
-np.save('/home/huhengtong/UKD/data/train_tags_dict.npy', train_tags_dict)
-np.save('/home/huhengtong/UKD/data/train_imgs_dict.npy', train_imgs_dict)
-np.save('/home/huhengtong/UKD/data/train_labels_dict.npy', train_labels_dict)
-np.save('/home/huhengtong/UKD/data/train_img_path_list.npy', train_img_path_list)
+np.save('/.../data/train_tags_dict.npy', train_tags_dict)
+np.save('/.../data/train_imgs_dict.npy', train_imgs_dict)
+np.save('/.../data/train_labels_dict.npy', train_labels_dict)
+np.save('/.../data/train_img_path_list.npy', train_img_path_list)
