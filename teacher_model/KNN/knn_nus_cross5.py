@@ -44,9 +44,9 @@ list_dir = dataset_dir + 'list/'
 feature_dir = dataset_dir + 'feature/'
 result_dir = './' + dataset + '/'
 
-train_img_string_list = open(feature_dir + 'train_img.txt', 'r').read().split('\n')
-train_txt_string_list = open(feature_dir + 'train_txt.txt', 'r').read().split('\n')
-train_label = open(list_dir + 'train_label.txt', 'r').read().split('\r\n')
+# train_img_string_list = open(feature_dir + 'train_img.txt', 'r').read().split('\n')
+# train_txt_string_list = open(feature_dir + 'train_txt.txt', 'r').read().split('\n')
+# train_label = open(list_dir + 'train_label.txt', 'r').read().split('\r\n')
 
 train_img = get_feature(train_img_string_list, train_size)
 train_txt = get_feature(train_txt_string_list, train_size)
