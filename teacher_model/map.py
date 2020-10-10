@@ -1,153 +1,80 @@
-import linecache, pdb
 import numpy as np
+import pdb
 
 
-def push_query(query, url, dict):
-	if query in dict:
-		dict[query].append(url)
-	else:
-		dict[query] = [url]
-	return dict
-	
+def calcu_map(query_pos_test, query_index_url_test, hash_dict, label_dict):
+	rs = []
+	map = 0       
+	for query in query_pos_test.keys():
+# 		pos_set = set(query_pos_test[query])
+		pred_list = query_index_url_test[query]
+		
+		pred_list_score = []
+		query_hash = hash_dict[query]
+		query_L = label_dict[query]       
+        
+		code_length = query_hash.shape[0]
+		candidates_hash = []
+		retrieval_L = []
+		for candidate in pred_list:
+#			score = 0
+			candidates_hash.append(hash_dict[candidate]) 
+			retrieval_L.append(label_dict[candidate])    
+		candidates_hash = np.asarray(candidates_hash) 
+		retrieval_L = np.asarray(retrieval_L)        
+		pred_list_score = code_length - np.sum(np.bitwise_xor(query_hash, candidates_hash), axis=1)  
+#		retr_list = np.sqrt(np.sum((candidates_hash - query_hash)**2, axis=1))
+#		pred_list_score_2 = np.sum(np.bitwise_xor(query_hash, candidates_hash), axis=1)          
+		idx = np.argsort(-pred_list_score)
+		gnd = (np.dot(query_L, retrieval_L.transpose()) > 0).astype(np.float32)  
+		gnd = gnd[idx]
+		tsum = np.sum(gnd)         
+		count = np.linspace(1, tsum, tsum)     
 
-def make_train_dict(query_list, url_list, label_dim):
-	query_url = {}
-	query_pos = {}
-	query_neg = {}
-	query_num = len(query_list) 
-	url_num = len(url_list) 
-	
-	for i in range(query_num):
-		query = query_list[i]
-		for j in range(url_num):
-			url = url_list[j]
-			if i == j:
-				push_query(query, url, query_url)
-				push_query(query, url, query_pos)
-			else:
-				push_query(query, url, query_url)
-				push_query(query, url, query_neg)
-			
-	return query_url, query_pos, query_neg
+		tindex = np.asarray(np.where(gnd == 1)) + 1.0       
+		map = map + np.mean(count / (np.squeeze(tindex)))
+#	return np.mean([average_precision(r) for r in rs])  
+	map = map / len(query_pos_test)
+	return map  
 
+def MAP(sess, model, test_i2t_pos, test_i2t, test_t2i_pos, test_t2i, feature_dict, label_dict):
+	hash_dict_img = get_hash_dict(sess, model, feature_dict, 'img')
+	hash_dict_txt = get_hash_dict(sess, model, feature_dict, 'txt')  
+	hash_dict_img.update(hash_dict_txt)   
+	hash_dict = hash_dict_img    
+ 
+	map_i2t = calcu_map(test_i2t_pos, test_i2t, hash_dict, label_dict)   
+	map_t2i = calcu_map(test_t2i_pos, test_t2i, hash_dict, label_dict) 
+	return map_i2t, map_t2i 
 
-def make_test_dict(query_list, url_list, query_label, url_label, label_dim):
-	query_url = {}
-	query_pos = {}
-	query_num = len(query_list) 
-	url_num = len(url_list) 
-	
-	for i in range(query_num):
-		query = query_list[i]
-		for j in range(url_num):
-			url = url_list[j]				
-			#if is_same_cate(query_label[i], url_label[j], label_dim):
-			if np.dot(query_label[i], url_label[j]) > 0:            
-				push_query(query, url, query_url)
-				push_query(query, url, query_pos)
-			else:
-				push_query(query, url, query_url)
-	return query_url, query_pos
-
-
-def get_dict_values(dictionary, keys):
-	num_sam = len(keys)
-	values = []
-	for i in range(num_sam):
-		values.append(dictionary.item()[keys[i]])
-	return np.array(values)
-
-
-def load_all_query_url(list_dir, label_dim):
-	retrieval_img_dict = np.load(list_dir + 'train_imgs_dict.npy')
-	test_img_dict = np.load(list_dir + 'test_imgs_dict.npy')
-
-	retrieval_txt_dict = np.load(list_dir + 'train_tags_dict.npy')
-	test_txt_dict = np.load(list_dir + 'test_tags_dict.npy')
-
-	retrieval_label_dict = np.load(list_dir + 'train_labels_dict.npy')
-	test_label_dict = np.load(list_dir + 'test_labels_dict.npy')
-
-	retrieval_img_path_list = np.load(list_dir + 'train_img_path_list.npy')
-	test_img_path_list = np.load(list_dir + 'test_img_path_list.npy')
-
-	retrieval_img = get_dict_values(retrieval_img_dict, retrieval_img_path_list)
-	test_img = get_dict_values(test_img_dict, test_img_path_list)
-	retrieval_txt = get_dict_values(retrieval_txt_dict, retrieval_img_path_list)
-	test_txt = get_dict_values(test_txt_dict, test_img_path_list)
-	retrieval_label = get_dict_values(retrieval_label_dict, retrieval_img_path_list)
-	test_label = get_dict_values(test_label_dict, test_img_path_list)
-    
-	train_img = retrieval_img[0:15000] 
-	train_txt = retrieval_txt[0:15000]
-	train_label = retrieval_label[0:15000]
-
-	retrieval_img_list = np.arange(retrieval_img.shape[0])  
-	train_img_list = retrieval_img_list[0:15000]    
-	test_img_list = np.arange(retrieval_img_list[-1] + 1, retrieval_img_list[-1] + 1 + test_img.shape[0])
-	retrieval_txt_list = np.arange(test_img_list[-1] + 1, test_img_list[-1] + 1 + retrieval_txt.shape[0]) 
-	train_txt_list = retrieval_txt_list[0:15000]    
-	test_txt_list = np.arange(retrieval_txt_list[-1] + 1, retrieval_txt_list[-1] + 1 + test_txt.shape[0])
-	
-	train_i2t, train_i2t_pos, train_i2t_neg = make_train_dict(train_img_list, train_txt_list, label_dim)
-	train_t2i, train_t2i_pos, train_t2i_neg = make_train_dict(train_txt_list, train_img_list, label_dim)
-	
-	test_i2t, test_i2t_pos = make_test_dict(test_img_list, retrieval_txt_list, test_label, retrieval_label, label_dim)
-	test_t2i, test_t2i_pos = make_test_dict(test_txt_list, retrieval_img_list, test_label, retrieval_label, label_dim)
-
-	return train_i2t, train_i2t_pos, train_i2t_neg, train_t2i, train_t2i_pos, train_t2i_neg, test_i2t, test_i2t_pos, test_t2i, test_t2i_pos
+def get_hash_dict(sess, model, feature_dict, flag):
+	batch_size = 512
+	hash_list = []    
+	if flag == 'img':
+		index = 0
+		max_idx = 20015     
+	if flag == 'txt':
+		index = 20015
+		max_idx = 40030
+	while index < max_idx:
+		input_data = []
+		if index + batch_size <= max_idx:
+			for i in range(index, index+batch_size):
+				input_data.append(feature_dict[i])
+		else:
+			for i in range(index, max_idx):
+				input_data.append(feature_dict[i])
+		index += batch_size
+		input_data = np.asarray(input_data)
+		if flag == 'img':
+			output_hash = sess.run(model.image_hash, feed_dict={model.image_data: input_data})
+		if flag == 'txt':
+			output_hash = sess.run(model.text_hash, feed_dict={model.text_data: input_data})
+		hash_list.append(output_hash)
+	hash_list = np.concatenate(hash_list)     
+	list_idx = np.arange(max_idx-20015, max_idx)
+#	print(list_idx.shape)    
+	hash_dict = dict(zip(list_idx, hash_list))        
+	return hash_dict    
 
 
-def load_all_feature(list_dir):
-	retrieval_img_dict = np.load(list_dir + 'train_imgs_dict.npy')
-	test_img_dict = np.load(list_dir + 'test_imgs_dict.npy')
-
-	retrieval_txt_dict = np.load(list_dir + 'train_tags_dict.npy')
-	test_txt_dict = np.load(list_dir + 'test_tags_dict.npy')
-
-	retrieval_img_path_list = np.load(list_dir + 'train_img_path_list.npy')
-	test_img_path_list = np.load(list_dir + 'test_img_path_list.npy')
-
-	retrieval_img = get_dict_values(retrieval_img_dict, retrieval_img_path_list)
-	test_img = get_dict_values(test_img_dict, test_img_path_list)
-	retrieval_txt = get_dict_values(retrieval_txt_dict, retrieval_img_path_list)
-	test_txt = get_dict_values(test_txt_dict, test_img_path_list)
-
-	retrieval_img_list = np.arange(retrieval_img.shape[0])
-	test_img_list = np.arange(retrieval_img_list[-1] + 1, retrieval_img_list[-1] + 1 + test_img.shape[0])
-	retrieval_txt_list = np.arange(test_img_list[-1] + 1, test_img_list[-1] + 1 + retrieval_txt.shape[0])
-	test_txt_list = np.arange(retrieval_txt_list[-1] + 1, retrieval_txt_list[-1] + 1 + test_txt.shape[0])
-
-	feature_retrieval_img_dict = dict(zip(retrieval_img_list, retrieval_img))
-	feature_test_img_dict = dict(zip(test_img_list, test_img))
-	feature_retrieval_txt_dict = dict(zip(retrieval_txt_list, retrieval_txt))
-	feature_test_txt_dict = dict(zip(test_txt_list, test_txt))
-
-	feature_dict = {**feature_retrieval_img_dict, **feature_test_img_dict}
-	feature_dict = {**feature_dict, **feature_retrieval_txt_dict}
-	feature_dict = {**feature_dict, **feature_test_txt_dict}
-	return feature_dict
-	
-
-def load_all_label(list_dir):
-    retrieval_label_dict = np.load(list_dir + 'train_labels_dict.npy')
-    test_label_dict = np.load(list_dir + 'test_labels_dict.npy')
-
-    retrieval_img_path_list = np.load(list_dir + 'train_img_path_list.npy')
-    test_img_path_list = np.load(list_dir + 'test_img_path_list.npy')
-
-    retrieval_label = get_dict_values(retrieval_label_dict, retrieval_img_path_list)
-    test_label = get_dict_values(test_label_dict, test_img_path_list)
-
-    retrieval_label_list = np.arange(retrieval_label.shape[0])
-    test_label_list = np.arange(retrieval_label_list[-1] + 1, retrieval_label_list[-1] + 1 + test_label.shape[0])
-
-    retrieval_img_label_dict = dict(zip(retrieval_label_list, retrieval_label))
-    test_img_label_dict = dict(zip(test_label_list, test_label))
-    img_label_dict = {**retrieval_img_label_dict, **test_img_label_dict}
-    retrieval_txt_label_dict = dict(zip(retrieval_label_list + len(img_label_dict), retrieval_label))
-    test_txt_label_dict = dict(zip(test_label_list + len(img_label_dict), test_label))
-    txt_label_dict = {**retrieval_txt_label_dict, **test_txt_label_dict}
-    label_dict = {**img_label_dict, **txt_label_dict}
-    #print(len(label_dict))
-    return label_dict
